@@ -71,6 +71,9 @@ class EditorPreview extends StatelessWidget {
                               ),
                             ),
                       ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 )
