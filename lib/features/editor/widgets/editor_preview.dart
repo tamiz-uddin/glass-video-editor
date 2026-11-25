@@ -43,7 +43,6 @@ class EditorPreview extends StatelessWidget {
                       children: [
                         VideoPlayer(controller!),
                         ...overlays
-                            .where((o) => o.isVisibleAt(0))
                             .map(
                               (o) => Positioned(
                                 left: o.x * MediaQuery.of(context).size.width * 0.9,
