@@ -47,11 +47,22 @@ test/timeline_math_test.dart      unit tests for timeline math
 - Export: 720p / 1080p / 4K portrait, 24/30/60 fps, live progress via EventChannel, output to app-specific external dir
 - Glassmorphism UI: blurred floating panels over preview, gradient accents, spring animations
 
-## Remaining roadmap
+## Phase status (see docs/PRODUCTION_PLAN.md)
 
-1. Filters/effects & transitions (FFmpeg or media3 effects), chroma key (GPU shader)
-2. Stabilization (gyro/OpenCV), motion tracking (MediaPipe), beat sync (FFT), auto captions (Whisper)
-3. Speed change in export (FFmpeg post-process), background removal, templates, cloud sync
+- Phase 0 hardening: tests, CI, fixes — done
+- Phase 1 core editor: transitions, filters, music, reverse/zoom, templates, thumbnails, captions flow — done
+- Phase 2 AI: MediaPipe background removal, on-device TTS, cloud AI proxy (upscale/denoise/voice), chroma key, stabilization, slow-mo — done (code), ASR model wiring pending
+- Phase 3 advanced: keyframes (preview + export), beat sync — done; motion tracking pending
+- Phase 4 platform: Firebase sync + share links, Play Billing paywall — code done, needs google-services.json + Play Console setup
+- Phase 5 polish: bn/en localization, onboarding, settings — done
+
+## Remaining before store launch
+
+1. Run `flutter pub get && flutter test && flutter run` locally — sandbox has no Flutter SDK, so nothing was compiled here; fix any analyzer/native API issues (CI will catch them too)
+2. Add `android/app/google-services.json`, apply google-services plugin, build with `--dart-define=ENABLE_FIREBASE=true`
+3. Bundle `assets/models/selfie_segmenter.tflite` for background removal
+4. Configure FFmpeg binary path (`VideoEngine.setFfmpegPath`) or ship per-ABI .so
+5. Play Console: products pro_monthly/pro_yearly, privacy policy, Data Safety, release keystore
 
 ## Setup
 
