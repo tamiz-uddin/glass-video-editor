@@ -24,6 +24,14 @@ class VideoEngine {
     await _channel.invokeMethod('setFfmpegPath', {'path': path});
   }
 
+  Future<String?> removeBackground({required String clipId, required String path}) async {
+    return _channel.invokeMethod<String>('removeBackground', {'clipId': clipId, 'path': path});
+  }
+
+  Future<String?> tts(String text, {String lang = 'en'}) async {
+    return _channel.invokeMethod<String>('tts', {'text': text, 'lang': lang});
+  }
+
   Future<List<Map<String, dynamic>>> transcribe(String path) async {
     final result = await _channel.invokeListMethod<Map>('transcribe', {'path': path});
     return result

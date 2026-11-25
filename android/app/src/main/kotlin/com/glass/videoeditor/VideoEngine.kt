@@ -50,6 +50,25 @@ class VideoEngine(private val context: Context) {
                 result.success(null)
             }
             "transcribe" -> result.success(emptyList<Map<String, Any>>())
+            "removeBackground" -> {
+                val path = call.argument<String>("path")
+                val clipId = call.argument<String>("clipId") ?: ""
+                if (path == null) {
+                    result.error("BG_FAILED", "no path", null)
+                } else {
+                    val dir = File(context.cacheDir, "masks_${clipId}_${path.hashCode()}")
+                    val masks = BackgroundRemover(context).extractMaskSequence(path, dir)
+                    if (masks != null) result.success(masks.absolutePath)
+                    else result.error("BG_FAILED", "mask extraction failed", null)
+                }
+            }
+            "tts" -> {
+                val text = call.argument<String>("text") ?: ""
+                val lang = call.argument<String>("lang") ?: "en"
+                val file = TtsEngine(context).synthesize(text, lang, context.cacheDir)
+                if (file != null) result.success(file)
+                else result.error("TTS_FAILED", "synthesis failed", null)
+            }
             "export" -> export(call, result)
             else -> result.notImplemented()
         }

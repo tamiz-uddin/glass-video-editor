@@ -222,6 +222,27 @@ class EditorController extends StateNotifier<EditorState> {
     _persist();
   }
 
+  void setRemoveBg(String clipId, bool value) {
+    state = state.copyWith(
+      clips: state.clips.map((c) => c.id == clipId ? c.copyWith(removeBg: value) : c).toList(),
+    );
+    _persist();
+  }
+
+  void setChroma(String clipId, int? hex) {
+    state = state.copyWith(
+      clips: state.clips.map((c) => c.id == clipId ? c.copyWith(chromaHex: hex) : c).toList(),
+    );
+    _persist();
+  }
+
+  void setStabilize(String clipId, bool value) {
+    state = state.copyWith(
+      clips: state.clips.map((c) => c.id == clipId ? c.copyWith(stabilize: value) : c).toList(),
+    );
+    _persist();
+  }
+
   void setMusic({String? path, double? volume, int? startMs}) {
     state = state.copyWith(
       musicPath: path,

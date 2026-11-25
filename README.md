@@ -40,7 +40,9 @@ test/timeline_math_test.dart      unit tests for timeline math
 - Multi-video import (SAF picker, persistable URI permissions), duration probing via MediaExtractor
 - Projects persisted in Hive (clips, text overlays, export settings)
 - Timeline: reorder (drag), select, split at playhead, trim handles, seek ruler, playhead
-- Per-clip speed (0.1x–10x) and volume; preview applies trim/speed/volume and auto-advances across clips
+- Per-clip speed (0.1x–10x), volume, reverse, zoom/pan; preview applies trim/speed/volume and auto-advances across clips
+- Transitions (none/fade/slide/zoom), color filters, background music track, built-in templates — all in export pipeline (FFmpeg path when advanced ops present, else Media3)
+- Timeline clip thumbnails (video_thumbnail); auto-captions flow via `transcribe` channel (on-device ASR wiring next)
 - Text overlays on timeline; rendered in preview and burned into export (StaticOverlay)
 - Export: 720p / 1080p / 4K portrait, 24/30/60 fps, live progress via EventChannel, output to app-specific external dir
 - Glassmorphism UI: blurred floating panels over preview, gradient accents, spring animations

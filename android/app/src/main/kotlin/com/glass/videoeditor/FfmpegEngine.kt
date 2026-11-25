@@ -48,6 +48,9 @@ object FfmpegEngine {
             if (c.optString("transition", "none") != "none") return true
             if (c.optBoolean("reverse", false)) return true
             if (c.optDouble("zoom", 1.0) != 1.0) return true
+            if (c.optBoolean("removeBg", false)) return true
+            if (c.has("chromaHex") && !c.isNull("chromaHex")) return true
+            if (c.optBoolean("stabilize", false)) return true
         }
         return false
     }
@@ -81,8 +84,15 @@ object FfmpegEngine {
             }
             val speed = c.optDouble("speed", 1.0).let { if (it <= 0) 1.0 else it }
 
-            var vchain = "trim=start=$start:end=$end,setpts=(PTS-STARTPTS)/$speed"
+            var vchain = "trim=start=$start:end=$end"
+            if (speed < 1.0) vchain += ",minterpolate=fps=${fps * 4}"
+            vchain += ",setpts=(PTS-STARTPTS)/$speed"
+            if (c.optBoolean("stabilize", false)) vchain += ",deshake"
             if (c.optBoolean("reverse", false)) vchain += ",reverse"
+            if (c.has("chromaHex") && !c.isNull("chromaHex")) {
+                val hex = Integer.toHexString(c.getInt("chromaHex") and 0xFFFFFF)
+                vchain += ",colorkey=0x$hex:0.3:0.2"
+            }
             val f = filterChain(c.optString("filter", "none"))
             if (f.isNotEmpty()) vchain += ",$f"
             val zoom = c.optDouble("zoom", 1.0).let { if (it < 1.0) 1.0 else it }

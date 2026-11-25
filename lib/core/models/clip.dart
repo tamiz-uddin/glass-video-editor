@@ -15,6 +15,9 @@ class Clip extends HiveObject {
     this.zoom = 1.0,
     this.panX = 0.0,
     this.panY = 0.0,
+    this.removeBg = false,
+    this.chromaHex,
+    this.stabilize = false,
   });
 
   final String id;
@@ -30,13 +33,16 @@ class Clip extends HiveObject {
   final double zoom;
   final double panX;
   final double panY;
+  final bool removeBg;
+  final int? chromaHex;
+  final bool stabilize;
 
   int get sourceEndMs => trimEndMs == 0 ? durationMs : trimEndMs;
 
   int get effectiveDurationMs => ((sourceEndMs - trimStartMs) / speed).round();
 
   bool get hasAdvancedOps =>
-      speed != 1.0 || filter != 'none' || transition != 'none' || reverse || zoom != 1.0;
+      speed != 1.0 || filter != 'none' || transition != 'none' || reverse || zoom != 1.0 || removeBg || chromaHex != null || stabilize;
 
   Clip copyWith({
     String? id,
@@ -52,6 +58,9 @@ class Clip extends HiveObject {
     double? zoom,
     double? panX,
     double? panY,
+    bool? removeBg,
+    int? chromaHex,
+    bool? stabilize,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -67,6 +76,9 @@ class Clip extends HiveObject {
       zoom: zoom ?? this.zoom,
       panX: panX ?? this.panX,
       panY: panY ?? this.panY,
+      removeBg: removeBg ?? this.removeBg,
+      chromaHex: chromaHex ?? this.chromaHex,
+      stabilize: stabilize ?? this.stabilize,
     );
   }
 
@@ -84,6 +96,9 @@ class Clip extends HiveObject {
         'zoom': zoom,
         'panX': panX,
         'panY': panY,
+        'removeBg': removeBg,
+        'chromaHex': chromaHex,
+        'stabilize': stabilize,
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -100,6 +115,9 @@ class Clip extends HiveObject {
         zoom: (json['zoom'] as num?)?.toDouble() ?? 1.0,
         panX: (json['panX'] as num?)?.toDouble() ?? 0.0,
         panY: (json['panY'] as num?)?.toDouble() ?? 0.0,
+        removeBg: json['removeBg'] as bool? ?? false,
+        chromaHex: (json['chromaHex'] as num?)?.toInt(),
+        stabilize: json['stabilize'] as bool? ?? false,
       );
 }
 
