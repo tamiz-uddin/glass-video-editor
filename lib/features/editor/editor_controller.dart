@@ -6,6 +6,7 @@ import 'package:glass_video_editor/core/models/project.dart';
 import 'package:glass_video_editor/core/models/text_overlay.dart';
 import 'package:glass_video_editor/features/editor/timeline_math.dart';
 import 'package:glass_video_editor/features/projects/projects_provider.dart';
+import 'package:glass_video_editor/features/templates/templates.dart';
 
 class EditorState {
   const EditorState({
@@ -226,6 +227,16 @@ class EditorController extends StateNotifier<EditorState> {
       musicPath: path,
       musicVolume: volume,
       musicStartMs: startMs,
+    );
+    _persist();
+  }
+
+  void applyTemplate(EditorTemplate template) {
+    final clips = applyTemplateToClips(state.clips, template);
+    final title = template.titleOverlay(newOverlayId(), totalDurationMsOf(clips));
+    state = state.copyWith(
+      clips: clips,
+      overlays: title != null ? [...state.overlays, title] : state.overlays,
     );
     _persist();
   }

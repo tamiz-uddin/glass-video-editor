@@ -17,6 +17,7 @@ import 'package:glass_video_editor/features/editor/widgets/editor_preview.dart';
 import 'package:glass_video_editor/features/editor/widgets/glass_timeline.dart';
 import 'package:glass_video_editor/features/editor/widgets/glass_toolbar.dart';
 import 'package:glass_video_editor/features/editor/widgets/tool_sheets.dart';
+import 'package:glass_video_editor/features/templates/templates.dart';
 
 class EditorScreen extends ConsumerStatefulWidget {
   const EditorScreen({super.key, required this.projectId});
@@ -250,6 +251,26 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             SnackBar(content: Text('${segments.length} caption(s) added')),
           );
         }
+      }),
+      EditorTool(Icons.auto_awesome, 'Template', () {
+        showToolSheet(
+          context: context,
+          title: 'Templates',
+          child: Column(
+            children: builtinTemplates
+                .map(
+                  (t) => ListTile(
+                    title: Text(t.name, style: const TextStyle(color: AppColors.textPrimary)),
+                    subtitle: Text(t.description, style: const TextStyle(color: AppColors.textSecondary)),
+                    onTap: () {
+                      _editor.applyTemplate(t);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                )
+                .toList(),
+          ),
+        );
       }),
       EditorTool(Icons.music_note, 'Music', () async {
         final result = await FilePicker.platform.pickFiles(type: FileType.audio);
