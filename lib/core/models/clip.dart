@@ -8,6 +8,7 @@ class Clip extends HiveObject {
     this.trimStartMs = 0,
     this.trimEndMs = 0,
     this.speed = 1.0,
+    this.volume = 1.0,
   });
 
   final String id;
@@ -16,11 +17,11 @@ class Clip extends HiveObject {
   final int trimStartMs;
   final int trimEndMs;
   final double speed;
+  final double volume;
 
-  int get effectiveDurationMs {
-    final end = trimEndMs == 0 ? durationMs : trimEndMs;
-    return ((end - trimStartMs) / speed).round();
-  }
+  int get sourceEndMs => trimEndMs == 0 ? durationMs : trimEndMs;
+
+  int get effectiveDurationMs => ((sourceEndMs - trimStartMs) / speed).round();
 
   Clip copyWith({
     String? id,
@@ -29,6 +30,7 @@ class Clip extends HiveObject {
     int? trimStartMs,
     int? trimEndMs,
     double? speed,
+    double? volume,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -37,6 +39,7 @@ class Clip extends HiveObject {
       trimStartMs: trimStartMs ?? this.trimStartMs,
       trimEndMs: trimEndMs ?? this.trimEndMs,
       speed: speed ?? this.speed,
+      volume: volume ?? this.volume,
     );
   }
 
@@ -47,15 +50,17 @@ class Clip extends HiveObject {
         'trimStartMs': trimStartMs,
         'trimEndMs': trimEndMs,
         'speed': speed,
+        'volume': volume,
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
         id: json['id'] as String,
         path: json['path'] as String,
-        durationMs: json['durationMs'] as int,
+        durationMs: (json['durationMs'] as num).toInt(),
         trimStartMs: (json['trimStartMs'] as num?)?.toInt() ?? 0,
         trimEndMs: (json['trimEndMs'] as num?)?.toInt() ?? 0,
         speed: (json['speed'] as num?)?.toDouble() ?? 1.0,
+        volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
       );
 }
 
@@ -64,9 +69,8 @@ class ClipAdapter extends TypeAdapter<Clip> {
   final int typeId = 1;
 
   @override
-  Clip read(BinaryReader reader) => Clip.fromJson(
-        Map<String, dynamic>.from(reader.read() as Map),
-      );
+  Clip read(BinaryReader reader) =>
+      Clip.fromJson(Map<String, dynamic>.from(reader.read() as Map));
 
   @override
   void write(BinaryWriter writer, Clip obj) => writer.write(obj.toJson());

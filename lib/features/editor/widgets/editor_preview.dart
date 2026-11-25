@@ -1,16 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:glass_video_editor/core/models/clip.dart';
+import 'package:glass_video_editor/core/models/text_overlay.dart';
 import 'package:glass_video_editor/core/theme/app_theme.dart';
 import 'package:glass_video_editor/core/widgets/glass_panel.dart';
 
 class EditorPreview extends StatelessWidget {
-  const EditorPreview({super.key, required this.controller});
+  const EditorPreview({
+    super.key,
+    required this.controller,
+    required this.clip,
+    required this.overlays,
+    required this.playing,
+    required this.onTogglePlay,
+  });
 
   final VideoPlayerController? controller;
+  final Clip? clip;
+  final List<TextOverlay> overlays;
+  final bool playing;
+  final VoidCallback onTogglePlay;
 
   @override
   Widget build(BuildContext context) {
-    final ready = controller != null && controller!.value.isInitialized;
+    final ready = controller != null && controller!.value.isInitialized && clip != null;
 
     return Stack(
       children: [
@@ -26,7 +39,28 @@ class EditorPreview extends StatelessWidget {
               ? Center(
                   child: AspectRatio(
                     aspectRatio: controller!.value.aspectRatio,
-                    child: VideoPlayer(controller!),
+                    child: Stack(
+                      children: [
+                        VideoPlayer(controller!),
+                        ...overlays
+                            .where((o) => o.isVisibleAt(0))
+                            .map(
+                              (o) => Positioned(
+                                left: o.x * MediaQuery.of(context).size.width * 0.9,
+                                top: o.y * 300,
+                                child: Text(
+                                  o.text,
+                                  style: TextStyle(
+                                    color: Color(o.colorHex),
+                                    fontSize: o.fontSize,
+                                    fontWeight: FontWeight.w700,
+                                    shadows: const [Shadow(blurRadius: 8, color: Colors.black54)],
+                                  ),
+                                ),
+                              ),
+                            ),
+                      ],
+                    ),
                   ),
                 )
               : const Center(
@@ -35,24 +69,19 @@ class EditorPreview extends StatelessWidget {
         ),
         if (ready)
           Positioned.fill(
-            child: Align(
-              alignment: Alignment.center,
-              child: GlassPanel(
-                blur: 30,
-                opacity: 0.12,
-                radius: 40,
-                padding: const EdgeInsets.all(10),
-                child: IconButton(
-                  iconSize: 32,
-                  color: Colors.white,
-                  icon: Icon(
-                    controller!.value.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+            child: GestureDetector(
+              onTap: onTogglePlay,
+              child: Center(
+                child: AnimatedOpacity(
+                  opacity: playing ? 0.0 : 1.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: GlassPanel(
+                    blur: 30,
+                    opacity: 0.14,
+                    radius: 40,
+                    padding: const EdgeInsets.all(10),
+                    child: const Icon(Icons.play_circle_filled, size: 56, color: Colors.white),
                   ),
-                  onPressed: () {
-                    controller!.value.isPlaying
-                        ? controller!.pause()
-                        : controller!.play();
-                  },
                 ),
               ),
             ),

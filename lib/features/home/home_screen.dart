@@ -21,24 +21,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _engine = VideoEngine();
 
   Future<void> _newProject() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.video);
-    final path = result?.files.single.path;
-    if (path == null) return;
-
-    final durationMs = await _engine.probeDurationMs(path) ?? 0;
-    final clip = Clip(
-      id: const Uuid().v4(),
-      path: path,
-      durationMs: durationMs,
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.video,
+      allowMultiple: true,
     );
-    final project = await ref
-        .read(projectsProvider.notifier)
-        .createProject('Untitled ${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}', clips: [clip]);
+    final paths = result?.files.map((f) => f.path).whereType<String>().toList() ?? [];
+    if (paths.isEmpty) return;
+
+    final clips = <Clip>[];
+    for (final path in paths) {
+      final durationMs = await _engine.probeDurationMs(path) ?? 0;
+      clips.add(Clip(id: const Uuid().v4(), path: path, durationMs: durationMs));
+    }
+    final now = DateTime.now();
+    final project = await ref.read(projectsProvider.notifier).createProject(
+          'Project ${now.hour}:${now.minute.toString().padLeft(2, '0')}',
+          clips: clips,
+        );
 
     if (!mounted) return;
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondary) => EditorScreen(project: project),
+        pageBuilder: (context, animation, secondary) => EditorScreen(projectId: project.id),
         transitionsBuilder: (context, animation, secondary, child) =>
             FadeTransition(opacity: animation, child: child),
         transitionDuration: 350.ms,
@@ -104,7 +108,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ),
                                   title: Text(project.name, style: Theme.of(context).textTheme.titleLarge),
                                   subtitle: Text(
-                                    '${project.clips.length} clip(s) • ${project.createdAt.toIso8601String().substring(0, 10)}',
+                                    '${project.clips.length} clip(s) • ${project.totalDurationMs ~/ 1000}s • ${project.createdAt.toIso8601String().substring(0, 10)}',
                                     style: Theme.of(context).textTheme.bodyMedium,
                                   ),
                                   trailing: IconButton(
@@ -115,7 +119,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ),
                                   onTap: () => Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (_) => EditorScreen(project: project),
+                                      builder: (_) => EditorScreen(projectId: project.id),
                                     ),
                                   ),
                                 ),
