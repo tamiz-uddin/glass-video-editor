@@ -62,6 +62,11 @@ class VideoEngine(private val context: Context) {
                     else result.error("BG_FAILED", "mask extraction failed", null)
                 }
             }
+            "detectBeats" -> {
+                val path = call.argument<String>("path")
+                if (path == null) result.success(emptyList<Long>())
+                else result.success(BeatDetector.detectBeats(context, path))
+            }
             "tts" -> {
                 val text = call.argument<String>("text") ?: ""
                 val lang = call.argument<String>("lang") ?: "en"

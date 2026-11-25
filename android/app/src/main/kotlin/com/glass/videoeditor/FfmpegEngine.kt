@@ -16,6 +16,23 @@ object FfmpegEngine {
         else -> ""
     }
 
+    private fun piecewiseExpr(kfs: org.json.JSONArray, field: String, defaultValue: Double): String {
+        val pts = mutableListOf<Pair<Double, Double>>()
+        for (i in 0 until kfs.length()) {
+            val k = kfs.getJSONObject(i)
+            pts.add(k.getDouble("t") to k.optDouble(field, defaultValue))
+        }
+        pts.sortBy { it.first }
+        var expr = defaultValue.toString()
+        for (i in pts.length - 1 downTo 1) {
+            val (t0, v0) = pts[i - 1]
+            val (t1, v1) = pts[i]
+            expr = "if(gte(t,${t1}),${v1},if(gte(t,${t0}),${v0}+(${v1}-${v0})*(t-${t0})/(${t1}-${t0}),$expr))"
+        }
+        val (t0, v0) = pts.first()
+        return "if(gte(t,${t0}),${v0},$expr)"
+    }
+
     private fun atempoChain(speed: Double): String {
         var remaining = speed
         val parts = mutableListOf<String>()
@@ -95,8 +112,15 @@ object FfmpegEngine {
             }
             val f = filterChain(c.optString("filter", "none"))
             if (f.isNotEmpty()) vchain += ",$f"
+            val kfs = c.optJSONArray("keyframes")
             val zoom = c.optDouble("zoom", 1.0).let { if (it < 1.0) 1.0 else it }
-            if (zoom != 1.0) {
+            if (kfs != null && kfs.length() >= 2) {
+                val zExpr = piecewiseExpr(kfs, "zoom", 1.0)
+                val xExpr = piecewiseExpr(kfs, "panX", 0.0)
+                val yExpr = piecewiseExpr(kfs, "panY", 0.0)
+                vchain += ",scale=w=$width*($zExpr):h=$height*($zExpr):force_original_aspect_ratio=decrease," +
+                    "crop=$width:$height:(in_w-out_w)/2+(($xExpr)*in_w):(in_h-out_h)/2+(($yExpr)*in_h)"
+            } else if (zoom != 1.0) {
                 val panX = c.optDouble("panX", 0.0)
                 val panY = c.optDouble("panY", 0.0)
                 vchain += ",scale=w=$width*$zoom:h=$height*$zoom:force_original_aspect_ratio=decrease," +

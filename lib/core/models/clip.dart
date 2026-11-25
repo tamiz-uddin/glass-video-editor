@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:glass_video_editor/core/models/keyframe.dart';
 
 class Clip extends HiveObject {
   Clip({
@@ -18,6 +19,7 @@ class Clip extends HiveObject {
     this.removeBg = false,
     this.chromaHex,
     this.stabilize = false,
+    this.keyframes = const [],
   });
 
   final String id;
@@ -36,6 +38,7 @@ class Clip extends HiveObject {
   final bool removeBg;
   final int? chromaHex;
   final bool stabilize;
+  final List<Keyframe> keyframes;
 
   int get sourceEndMs => trimEndMs == 0 ? durationMs : trimEndMs;
 
@@ -61,6 +64,7 @@ class Clip extends HiveObject {
     bool? removeBg,
     int? chromaHex,
     bool? stabilize,
+    List<Keyframe>? keyframes,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -79,6 +83,7 @@ class Clip extends HiveObject {
       removeBg: removeBg ?? this.removeBg,
       chromaHex: chromaHex ?? this.chromaHex,
       stabilize: stabilize ?? this.stabilize,
+      keyframes: keyframes ?? this.keyframes,
     );
   }
 
@@ -99,6 +104,7 @@ class Clip extends HiveObject {
         'removeBg': removeBg,
         'chromaHex': chromaHex,
         'stabilize': stabilize,
+        'keyframes': keyframes.map((k) => k.toJson()).toList(),
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -118,6 +124,9 @@ class Clip extends HiveObject {
         removeBg: json['removeBg'] as bool? ?? false,
         chromaHex: (json['chromaHex'] as num?)?.toInt(),
         stabilize: json['stabilize'] as bool? ?? false,
+        keyframes: (json['keyframes'] as List<dynamic>? ?? [])
+            .map((e) => Keyframe.fromJson(e as Map<String, dynamic>))
+            .toList(),
       );
 }
 

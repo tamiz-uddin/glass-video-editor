@@ -32,6 +32,11 @@ class VideoEngine {
     return _channel.invokeMethod<String>('tts', {'text': text, 'lang': lang});
   }
 
+  Future<List<int>> detectBeats(String path) async {
+    final result = await _channel.invokeListMethod<int>('detectBeats', {'path': path});
+    return result?.map((e) => e ?? 0).toList() ?? const [];
+  }
+
   Future<List<Map<String, dynamic>>> transcribe(String path) async {
     final result = await _channel.invokeListMethod<Map>('transcribe', {'path': path});
     return result

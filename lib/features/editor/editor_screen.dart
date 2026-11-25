@@ -12,6 +12,7 @@ import 'package:glass_video_editor/core/theme/app_theme.dart';
 import 'package:glass_video_editor/core/video/video_engine.dart';
 import 'package:glass_video_editor/core/widgets/glass_panel.dart';
 import 'package:glass_video_editor/features/editor/editor_controller.dart';
+import 'package:glass_video_editor/features/editor/keyframe_math.dart';
 import 'package:glass_video_editor/features/editor/timeline_math.dart';
 import 'package:glass_video_editor/features/editor/widgets/editor_preview.dart';
 import 'package:glass_video_editor/features/editor/widgets/glass_timeline.dart';
@@ -231,6 +232,47 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           ),
         );
       }),
+      EditorTool(Icons.key, 'Keyframe', () => _editor.addKeyframeAtPlayhead()),
+      EditorTool(Icons.panorama, 'KenBurns', () {
+        final clip = state.selectedClip;
+        if (clip != null) _editor.kenBurns(clip.id);
+      }),
+      EditorTool(Icons.graphic_eq, 'Beats', () async {
+        final clip = state.selectedClip;
+        if (clip == null) return;
+        final raw = await _engine.detectBeats(clip.path);
+        final base = timelineStartOf(state.clips, clip.id);
+        _editor.setBeats(raw.map((b) => base + b).toList());
+      }),
+      EditorTool(Icons.layers_clear, 'BG', () async {
+        final clip = state.selectedClip;
+        if (clip == null) return;
+        final next = !clip.removeBg;
+        if (next) await _engine.removeBackground(clipId: clip.id, path: clip.path);
+        _editor.setRemoveBg(clip.id, next);
+      }),
+      EditorTool(Icons.colorize, 'Chroma', () {
+        final clip = state.selectedClip;
+        if (clip == null) return;
+        _editor.setChroma(clip.id, clip.chromaHex == null ? 0xFF00FF00 : null);
+      }),
+      EditorTool(Icons.waves, 'Stabilize', () {
+        final clip = state.selectedClip;
+        if (clip == null) return;
+        _editor.setStabilize(clip.id, !clip.stabilize);
+      }),
+      EditorTool(Icons.record_voice_over, 'Voice', () {
+        showToolSheet(
+          context: context,
+          title: 'Voiceover (becomes music track)',
+          child: TextSheet(
+            onSubmit: (text) async {
+              final path = await _engine.tts(text);
+              if (path != null) _editor.setMusic(path: path);
+            },
+          ),
+        );
+      }),
       EditorTool(Icons.closed_caption_outlined, 'Captions', () async {
         final clip = state.selectedClip;
         if (clip == null) return;
@@ -346,6 +388,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                     controller: _player,
                     clip: currentClip,
                     overlays: visibleOverlays,
+                    transform: currentClip == null
+                        ? null
+                        : transformAt(
+                            currentClip.keyframes,
+                            state.playheadMs <= 0 || currentClip.effectiveDurationMs == 0
+                                ? 0
+                                : (state.playheadMs - timelineStartOf(state.clips, currentClip.id)) /
+                                    currentClip.effectiveDurationMs,
+                          ),
                     playing: state.playing && (_player?.value.isPlaying ?? false),
                     onTogglePlay: () {
                       final next = !state.playing;

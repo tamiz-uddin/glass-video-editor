@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'package:glass_video_editor/core/models/clip.dart';
 import 'package:glass_video_editor/core/models/project.dart';
 import 'package:glass_video_editor/core/models/text_overlay.dart';
+import 'package:glass_video_editor/core/models/keyframe.dart';
 import 'package:glass_video_editor/features/editor/timeline_math.dart';
 import 'package:glass_video_editor/features/projects/projects_provider.dart';
 import 'package:glass_video_editor/features/templates/templates.dart';
@@ -21,6 +22,7 @@ class EditorState {
     this.musicPath,
     this.musicVolume = 1.0,
     this.musicStartMs = 0,
+    this.beats = const [],
   });
 
   final List<Clip> clips;
@@ -34,6 +36,7 @@ class EditorState {
   final String? musicPath;
   final double musicVolume;
   final int musicStartMs;
+  final List<int> beats;
 
   int get totalDurationMs => totalDurationMsOf(clips);
 
@@ -61,6 +64,7 @@ class EditorState {
     String? musicPath,
     double? musicVolume,
     int? musicStartMs,
+    List<int>? beats,
   }) => EditorState(
         clips: clips ?? this.clips,
         overlays: overlays ?? this.overlays,
@@ -73,6 +77,7 @@ class EditorState {
         musicPath: musicPath ?? this.musicPath,
         musicVolume: musicVolume ?? this.musicVolume,
         musicStartMs: musicStartMs ?? this.musicStartMs,
+        beats: beats ?? this.beats,
       );
 }
 
@@ -250,6 +255,39 @@ class EditorController extends StateNotifier<EditorState> {
       musicStartMs: startMs,
     );
     _persist();
+  }
+
+  void addKeyframeAtPlayhead() {
+    final clip = selectedClip;
+    if (clip == null) return;
+    final clipStart = timelineStartOf(state.clips, clip.id);
+    final within = clip.effectiveDurationMs == 0
+        ? 0.0
+        : ((state.playheadMs - clipStart) / clip.effectiveDurationMs).clamp(0.0, 1.0);
+    final kf = Keyframe(t: within, zoom: clip.zoom, panX: clip.panX, panY: clip.panY);
+    final keyframes = [...clip.keyframes.where((k) => (k.t - within).abs() > 0.01), kf]
+      ..sort((a, b) => a.t.compareTo(b.t));
+    state = state.copyWith(
+      clips: state.clips
+          .map((c) => c.id == clip.id ? c.copyWith(keyframes: keyframes) : c)
+          .toList(),
+    );
+    _persist();
+  }
+
+  void kenBurns(String clipId) {
+    const kfs = [
+      Keyframe(t: 0, zoom: 1.0, panX: 0),
+      Keyframe(t: 1, zoom: 1.3, panX: 0.1),
+    ];
+    state = state.copyWith(
+      clips: state.clips.map((c) => c.id == clipId ? c.copyWith(keyframes: kfs) : c).toList(),
+    );
+    _persist();
+  }
+
+  void setBeats(List<int> beats) {
+    state = state.copyWith(beats: beats);
   }
 
   void applyTemplate(EditorTemplate template) {

@@ -4,6 +4,7 @@ import 'package:glass_video_editor/core/models/clip.dart';
 import 'package:glass_video_editor/core/models/text_overlay.dart';
 import 'package:glass_video_editor/core/theme/app_theme.dart';
 import 'package:glass_video_editor/core/widgets/glass_panel.dart';
+import 'package:glass_video_editor/features/editor/keyframe_math.dart';
 
 class EditorPreview extends StatelessWidget {
   const EditorPreview({
@@ -13,6 +14,7 @@ class EditorPreview extends StatelessWidget {
     required this.overlays,
     required this.playing,
     required this.onTogglePlay,
+    this.transform,
   });
 
   final VideoPlayerController? controller;
@@ -20,6 +22,7 @@ class EditorPreview extends StatelessWidget {
   final List<TextOverlay> overlays;
   final bool playing;
   final VoidCallback onTogglePlay;
+  final KeyframeTransform? transform;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +42,16 @@ class EditorPreview extends StatelessWidget {
               ? Center(
                   child: AspectRatio(
                     aspectRatio: controller!.value.aspectRatio,
-                    child: Stack(
+                    child: Opacity(
+                      opacity: transform?.opacity ?? 1.0,
+                      child: Transform.scale(
+                        scale: transform?.zoom ?? 1.0,
+                        child: Transform.translate(
+                          offset: Offset(
+                            (transform?.panX ?? 0) * 200,
+                            (transform?.panY ?? 0) * 200,
+                          ),
+                          child: Stack(
                       children: [
                         VideoPlayer(controller!),
                         ...overlays
