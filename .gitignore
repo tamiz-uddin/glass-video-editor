@@ -1,0 +1,30 @@
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Android
+android/.gradle/
+android/local.properties
+android/app/release/
+android/app/profile/
+*.iml
+.idea/
+
+# iOS
+ios/Flutter/Flutter.podspec
+ios/.symlinks/
+ios/Pods/
+
+# Env / secrets
+.env
+*.pem
+*.keystore
+
+# Misc
+*.log
+.DS_Store
