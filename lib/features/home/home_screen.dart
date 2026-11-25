@@ -1,14 +1,18 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import 'package:glass_video_editor/core/l10n/strings.dart';
 import 'package:glass_video_editor/core/models/clip.dart';
 import 'package:glass_video_editor/core/theme/app_theme.dart';
 import 'package:glass_video_editor/core/video/video_engine.dart';
 import 'package:glass_video_editor/core/widgets/glass_panel.dart';
 import 'package:glass_video_editor/features/editor/editor_screen.dart';
+import 'package:glass_video_editor/features/onboarding/onboarding_screen.dart';
 import 'package:glass_video_editor/features/projects/projects_provider.dart';
+import 'package:glass_video_editor/features/settings/settings_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +23,21 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _engine = VideoEngine();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final seen = Hive.box('settings').get(onboardingSeenKey, defaultValue: false) as bool;
+      if (!seen && mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => OnboardingScreen(onDone: () => Navigator.of(context).pop()),
+          ),
+        );
+      }
+    });
+  }
 
   Future<void> _newProject() async {
     final result = await FilePicker.platform.pickFiles(
@@ -56,7 +75,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(title: const Text('Glass Editor')),
+      appBar: AppBar(
+        title: Text(AppStrings.of(context).t('appTitle')),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            ),
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           const DecoratedBox(
@@ -74,7 +103,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Your projects', style: Theme.of(context).textTheme.displayLarge)
+                  Text(AppStrings.of(context).t('projects'), style: Theme.of(context).textTheme.displayLarge)
                       .animate()
                       .fadeIn(duration: 400.ms)
                       .slideY(begin: 0.2, end: 0),
@@ -83,7 +112,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: projects.isEmpty
                         ? Center(
                             child: Text(
-                              'No projects yet. Tap + to create one.',
+                              AppStrings.of(context).t('emptyProjects'),
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           )

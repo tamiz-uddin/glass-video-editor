@@ -25,5 +25,6 @@ Future<void> main() async {
   Hive.registerAdapter(ClipAdapter());
   Hive.registerAdapter(TextOverlayAdapter());
   await Hive.openBox<Project>(projectsBoxName);
+  await Hive.openBox('settings');
   runApp(const ProviderScope(child: GlassApp()));
 }
