@@ -201,6 +201,26 @@ class EditorController extends StateNotifier<EditorState> {
     _persist();
   }
 
+  void setReverse(String clipId, bool reverse) {
+    state = state.copyWith(
+      clips: state.clips
+          .map((c) => c.id == clipId ? c.copyWith(reverse: reverse) : c)
+          .toList(),
+    );
+    _persist();
+  }
+
+  void setZoom(String clipId, double zoom, {double? panX, double? panY}) {
+    state = state.copyWith(
+      clips: state.clips
+          .map((c) => c.id == clipId
+              ? c.copyWith(zoom: zoom, panX: panX ?? c.panX, panY: panY ?? c.panY)
+              : c)
+          .toList(),
+    );
+    _persist();
+  }
+
   void setMusic({String? path, double? volume, int? startMs}) {
     state = state.copyWith(
       musicPath: path,

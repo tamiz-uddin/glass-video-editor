@@ -216,6 +216,41 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           ),
         );
       }),
+      EditorTool(Icons.photo_size_select_small, 'Adjust', () {
+        final clip = state.selectedClip;
+        if (clip == null) return;
+        showToolSheet(
+          context: context,
+          title: 'Zoom / Reverse',
+          child: AdjustSheet(
+            zoom: clip.zoom,
+            reverse: clip.reverse,
+            onZoom: (z) => _editor.setZoom(clip.id, z),
+            onReverse: (r) => _editor.setReverse(clip.id, r),
+          ),
+        );
+      }),
+      EditorTool(Icons.closed_caption_outlined, 'Captions', () async {
+        final clip = state.selectedClip;
+        if (clip == null) return;
+        final segments = await _engine.transcribe(clip.path);
+        final base = timelineStartOf(state.clips, clip.id);
+        for (final s in segments) {
+          _editor.addOverlay(TextOverlay(
+            id: _editor.newOverlayId(),
+            text: s['text'] as String,
+            startMs: base + (s['startMs'] as int),
+            endMs: base + (s['endMs'] as int),
+            y: 0.85,
+            fontSize: 24,
+          ));
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${segments.length} caption(s) added')),
+          );
+        }
+      }),
       EditorTool(Icons.music_note, 'Music', () async {
         final result = await FilePicker.platform.pickFiles(type: FileType.audio);
         final path = result?.files.single.path;

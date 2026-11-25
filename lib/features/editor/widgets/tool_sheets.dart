@@ -208,6 +208,61 @@ class _TextSheetState extends State<TextSheet> {
   }
 }
 
+class AdjustSheet extends StatefulWidget {
+  const AdjustSheet({super.key, required this.zoom, required this.reverse, required this.onZoom, required this.onReverse});
+
+  final double zoom;
+  final bool reverse;
+  final ValueChanged<double> onZoom;
+  final ValueChanged<bool> onReverse;
+
+  @override
+  State<AdjustSheet> createState() => _AdjustSheetState();
+}
+
+class _AdjustSheetState extends State<AdjustSheet> {
+  late double _zoom;
+
+  @override
+  void initState() {
+    super.initState();
+    _zoom = widget.zoom;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Zoom', style: TextStyle(color: AppColors.textSecondary)),
+            Text('${_zoom.toStringAsFixed(2)}x',
+                style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+          ],
+        ),
+        Slider(
+          value: _zoom,
+          min: 1,
+          max: 3,
+          divisions: 40,
+          activeColor: AppColors.accentViolet,
+          onChanged: (v) {
+            setState(() => _zoom = v);
+            widget.onZoom(v);
+          },
+        ),
+        SwitchListTile(
+          title: const Text('Reverse', style: TextStyle(color: AppColors.textPrimary)),
+          value: widget.reverse,
+          activeColor: AppColors.accentCyan,
+          onChanged: widget.onReverse,
+        ),
+      ],
+    );
+  }
+}
+
 class ExportSettingsSheet extends StatelessWidget {
   const ExportSettingsSheet({
     super.key,

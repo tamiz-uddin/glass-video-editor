@@ -24,6 +24,14 @@ class VideoEngine {
     await _channel.invokeMethod('setFfmpegPath', {'path': path});
   }
 
+  Future<List<Map<String, dynamic>>> transcribe(String path) async {
+    final result = await _channel.invokeListMethod<Map>('transcribe', {'path': path});
+    return result
+            ?.map((m) => Map<String, dynamic>.from(m))
+            .toList() ??
+        const [];
+  }
+
   Stream<double> exportProgress(String jobId) {
     return _progressChannel
         .receiveBroadcastStream({'jobId': jobId})

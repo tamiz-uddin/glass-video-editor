@@ -49,6 +49,7 @@ class VideoEngine(private val context: Context) {
                 ffmpegPath = call.argument<String>("path")
                 result.success(null)
             }
+            "transcribe" -> result.success(emptyList<Map<String, Any>>())
             "export" -> export(call, result)
             else -> result.notImplemented()
         }

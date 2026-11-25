@@ -11,6 +11,10 @@ class Clip extends HiveObject {
     this.volume = 1.0,
     this.transition = 'none',
     this.filter = 'none',
+    this.reverse = false,
+    this.zoom = 1.0,
+    this.panX = 0.0,
+    this.panY = 0.0,
   });
 
   final String id;
@@ -22,12 +26,17 @@ class Clip extends HiveObject {
   final double volume;
   final String transition;
   final String filter;
+  final bool reverse;
+  final double zoom;
+  final double panX;
+  final double panY;
 
   int get sourceEndMs => trimEndMs == 0 ? durationMs : trimEndMs;
 
   int get effectiveDurationMs => ((sourceEndMs - trimStartMs) / speed).round();
 
-  bool get hasAdvancedOps => speed != 1.0 || filter != 'none' || transition != 'none';
+  bool get hasAdvancedOps =>
+      speed != 1.0 || filter != 'none' || transition != 'none' || reverse || zoom != 1.0;
 
   Clip copyWith({
     String? id,
@@ -39,6 +48,10 @@ class Clip extends HiveObject {
     double? volume,
     String? transition,
     String? filter,
+    bool? reverse,
+    double? zoom,
+    double? panX,
+    double? panY,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -50,6 +63,10 @@ class Clip extends HiveObject {
       volume: volume ?? this.volume,
       transition: transition ?? this.transition,
       filter: filter ?? this.filter,
+      reverse: reverse ?? this.reverse,
+      zoom: zoom ?? this.zoom,
+      panX: panX ?? this.panX,
+      panY: panY ?? this.panY,
     );
   }
 
@@ -63,6 +80,10 @@ class Clip extends HiveObject {
         'volume': volume,
         'transition': transition,
         'filter': filter,
+        'reverse': reverse,
+        'zoom': zoom,
+        'panX': panX,
+        'panY': panY,
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -75,6 +96,10 @@ class Clip extends HiveObject {
         volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
         transition: json['transition'] as String? ?? 'none',
         filter: json['filter'] as String? ?? 'none',
+        reverse: json['reverse'] as bool? ?? false,
+        zoom: (json['zoom'] as num?)?.toDouble() ?? 1.0,
+        panX: (json['panX'] as num?)?.toDouble() ?? 0.0,
+        panY: (json['panY'] as num?)?.toDouble() ?? 0.0,
       );
 }
 

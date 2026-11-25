@@ -46,6 +46,8 @@ object FfmpegEngine {
             if (c.optDouble("speed", 1.0) != 1.0) return true
             if (c.optString("filter", "none") != "none") return true
             if (c.optString("transition", "none") != "none") return true
+            if (c.optBoolean("reverse", false)) return true
+            if (c.optDouble("zoom", 1.0) != 1.0) return true
         }
         return false
     }
@@ -80,8 +82,16 @@ object FfmpegEngine {
             val speed = c.optDouble("speed", 1.0).let { if (it <= 0) 1.0 else it }
 
             var vchain = "trim=start=$start:end=$end,setpts=(PTS-STARTPTS)/$speed"
+            if (c.optBoolean("reverse", false)) vchain += ",reverse"
             val f = filterChain(c.optString("filter", "none"))
             if (f.isNotEmpty()) vchain += ",$f"
+            val zoom = c.optDouble("zoom", 1.0).let { if (it < 1.0) 1.0 else it }
+            if (zoom != 1.0) {
+                val panX = c.optDouble("panX", 0.0)
+                val panY = c.optDouble("panY", 0.0)
+                vchain += ",scale=w=$width*$zoom:h=$height*$zoom:force_original_aspect_ratio=decrease," +
+                    "crop=$width:$height:(in_w-out_w)/2+($panX*in_w):(in_h-out_h)/2+($panY*in_h)"
+            }
             vchain += ",scale=$width:$height:force_original_aspect_ratio=decrease," +
                 "pad=$width:$height:(ow-iw)/2:(oh-ih)/2,fps=$fps,format=yuv420p"
             filters += "[$i:v]$vchain[v$i]"
