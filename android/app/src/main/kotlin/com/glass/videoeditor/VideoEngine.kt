@@ -33,6 +33,7 @@ class VideoEngine(private val context: Context) {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var progressSink: EventChannel.EventSink? = null
     private val activeJob = AtomicReference<String?>(null)
+    private var ffmpegPath: String? = null
 
     fun setProgressSink(sink: EventChannel.EventSink?) {
         progressSink = sink
@@ -43,6 +44,10 @@ class VideoEngine(private val context: Context) {
             "probeDuration" -> {
                 val path = call.argument<String>("path")
                 if (path == null) result.success(null) else result.success(probeDurationMs(path))
+            }
+            "setFfmpegPath" -> {
+                ffmpegPath = call.argument<String>("path")
+                result.success(null)
             }
             "export" -> export(call, result)
             else -> result.notImplemented()
@@ -99,6 +104,11 @@ class VideoEngine(private val context: Context) {
             val width = (args["width"] as Number).toInt()
             val height = (args["height"] as Number).toInt()
 
+            if (FfmpegEngine.needsFfmpeg(project) && ffmpegPath != null) {
+                exportWithFfmpeg(jobId, project, width, height, fps, result)
+                return
+            }
+
             val items = mutableListOf<EditedMediaItem>()
             val clipStarts = mutableListOf<Long>()
             var cursorMs = 0L
@@ -144,7 +154,18 @@ class VideoEngine(private val context: Context) {
             }
 
             val sequence = EditedMediaItemSequence.Builder(items).build()
-            val composition = Composition.Builder(listOf(sequence)).build()
+            val sequences = mutableListOf(sequence)
+            val musicPath = project.optString("musicPath", "")
+            if (musicPath.isNotEmpty() && musicPath != "null") {
+                val musicStart = project.optLong("musicStartMs", 0L)
+                val musicItem = EditedMediaItem.Builder(MediaItem.fromUri(Uri.parse(musicPath)))
+                    .setClippingConfiguration(
+                        ClippingConfiguration.Builder().setStartMs(musicStart).build()
+                    )
+                    .build()
+                sequences.add(EditedMediaItemSequence.Builder(listOf(musicItem)).build())
+            }
+            val composition = Composition.Builder(sequences).build()
 
             val outputDir = context.getExternalFilesDir(null) ?: context.cacheDir
             val output = File(outputDir, "export_$jobId.mp4")
@@ -184,6 +205,43 @@ class VideoEngine(private val context: Context) {
                 }
             }
             mainHandler.post(progressRunnable)
+        } catch (e: Exception) {
+            result.error("EXPORT_ERROR", e.message, null)
+        }
+    }
+
+    private fun exportWithFfmpeg(
+        jobId: String,
+        project: JSONObject,
+        width: Int,
+        height: Int,
+        fps: Int,
+        result: MethodChannel.Result
+    ) {
+        try {
+            val outputDir = context.getExternalFilesDir(null) ?: context.cacheDir
+            val output = File(outputDir, "export_$jobId.mp4")
+            val clips = project.getJSONArray("clips")
+            var totalMs = 0L
+            for (i in 0 until clips.length()) {
+                totalMs += FfmpegEngine.clipDurationSec(clips.getJSONObject(i)).toLong() * 1000
+            }
+            val command = FfmpegEngine.buildCommand(project, width, height, fps, output.absolutePath)
+            activeJob.set(jobId)
+            FfmpegEngine.runExport(
+                command = command,
+                totalDurationMs = totalMs,
+                onProgress = { sendProgress(jobId, it) },
+                onDone = { code ->
+                    activeJob.set(null)
+                    if (code == 0) {
+                        sendProgress(jobId, 1.0)
+                        result.success(output.absolutePath)
+                    } else {
+                        result.error("EXPORT_FAILED", "ffmpeg exited with code $code", null)
+                    }
+                }
+            )
         } catch (e: Exception) {
             result.error("EXPORT_ERROR", e.message, null)
         }

@@ -2,6 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:glass_video_editor/core/theme/app_theme.dart';
 import 'package:glass_video_editor/core/widgets/glass_panel.dart';
 
+const transitionOptions = <String, String>{
+  'none': 'None',
+  'fade': 'Fade',
+  'slideLeft': 'Slide L',
+  'slideRight': 'Slide R',
+  'zoom': 'Zoom',
+};
+
+const filterOptions = <String, String>{
+  'none': 'None',
+  'warm': 'Warm',
+  'cool': 'Cool',
+  'bw': 'B&W',
+  'vivid': 'Vivid',
+  'vintage': 'Vintage',
+};
+
 Future<void> showToolSheet({
   required BuildContext context,
   required String title,
@@ -36,6 +53,37 @@ Future<void> showToolSheet({
   );
 }
 
+class OptionSheet extends StatelessWidget {
+  const OptionSheet({
+    super.key,
+    required this.options,
+    required this.current,
+    required this.onSelected,
+  });
+
+  final Map<String, String> options;
+  final String current;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: options.entries.map((e) {
+        final selected = e.key == current;
+        return ChoiceChip(
+          label: Text(e.value),
+          selected: selected,
+          onSelected: (_) => onSelected(e.key),
+          selectedColor: AppColors.accentViolet,
+          labelStyle: TextStyle(color: selected ? Colors.white : AppColors.textSecondary),
+        );
+      }).toList(),
+    );
+  }
+}
+
 class SpeedSheet extends StatefulWidget {
   const SpeedSheet({super.key, required this.initial, required this.onChanged});
 
@@ -59,7 +107,8 @@ class _SpeedSheetState extends State<SpeedSheet> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text('${_value.toStringAsFixed(2)}x', style: const TextStyle(color: AppColors.textPrimary, fontSize: 24, fontWeight: FontWeight.w700)),
+        Text('${_value.toStringAsFixed(2)}x',
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 24, fontWeight: FontWeight.w700)),
         Slider(
           value: _value.clamp(0.1, 10),
           min: 0.1,
@@ -223,7 +272,10 @@ class ExportSettingsSheet extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: exporting ? null : onExport,
             icon: exporting
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.file_upload_outlined),
             label: Text(exporting ? 'Exporting...' : 'Export video'),
             style: ElevatedButton.styleFrom(

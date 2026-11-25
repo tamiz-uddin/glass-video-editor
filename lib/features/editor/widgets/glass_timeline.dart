@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:glass_video_editor/core/models/clip.dart';
 import 'package:glass_video_editor/core/theme/app_theme.dart';
 import 'package:glass_video_editor/core/widgets/glass_panel.dart';
@@ -41,9 +42,9 @@ class GlassTimeline extends StatelessWidget {
             height: 18,
             child: LayoutBuilder(
               builder: (context, constraints) {
+                final total = clips.fold<int>(0, (s, c) => s + c.effectiveDurationMs);
                 return GestureDetector(
                   onTapDown: (details) {
-                    final total = clips.fold<int>(0, (s, c) => s + c.effectiveDurationMs);
                     if (total <= 0) return;
                     onSeek((details.localPosition.dx / constraints.maxWidth * total).round());
                   },
@@ -54,11 +55,9 @@ class GlassTimeline extends StatelessWidget {
                         color: AppColors.glassBorder,
                         margin: const EdgeInsets.only(top: 8),
                       ),
-                      if (clips.isNotEmpty)
+                      if (total > 0)
                         Positioned(
-                          left: constraints.maxWidth *
-                              (playheadMs /
-                                  clips.fold<int>(0, (s, c) => s + c.effectiveDurationMs)),
+                          left: constraints.maxWidth * (playheadMs / total),
                           top: 2,
                           child: Container(
                             width: 2,
@@ -144,12 +143,14 @@ class _ClipCardState extends State<_ClipCard> {
   }
 
   void _dragLeft(double deltaPx) {
-    final ms = (deltaPx / widget.width * widget.clip.effectiveDurationMs * widget.clip.speed).round();
+    final ms =
+        (deltaPx / widget.width * widget.clip.effectiveDurationMs * widget.clip.speed).round();
     widget.onTrim(_start + ms, _end);
   }
 
   void _dragRight(double deltaPx) {
-    final ms = (deltaPx / widget.width * widget.clip.effectiveDurationMs * widget.clip.speed).round();
+    final ms =
+        (deltaPx / widget.width * widget.clip.effectiveDurationMs * widget.clip.speed).round();
     widget.onTrim(_start, _end + ms);
   }
 
@@ -170,40 +171,52 @@ class _ClipCardState extends State<_ClipCard> {
             color: widget.selected ? Colors.white38 : AppColors.glassBorder,
           ),
         ),
-        child: Row(
+        clipBehavior: Clip.hardEdge,
+        child: Stack(
           children: [
-            if (widget.selected)
-              GestureDetector(
-                onPanUpdate: (d) => _dragLeft(d.delta.dx),
-                child: Container(
-                  width: 14,
-                  decoration: const BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.horizontal(left: Radius.circular(AppRadius.chip)),
-                  ),
-                  child: const Icon(Icons.chevron_left, size: 14, color: Colors.white),
-                ),
-              ),
-            Expanded(
-              child: Center(
-                child: Text(
-                  '${(widget.clip.effectiveDurationMs / 1000).toStringAsFixed(1)}s',
-                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
-                ),
-              ),
+            Positioned.fill(
+              child: VideoThumbnail(video: widget.clip.path, fit: BoxFit.cover),
             ),
-            if (widget.selected)
-              GestureDetector(
-                onPanUpdate: (d) => _dragRight(d.delta.dx),
-                child: Container(
-                  width: 14,
-                  decoration: const BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.horizontal(right: Radius.circular(AppRadius.chip)),
+            Positioned.fill(
+              child: Container(color: Colors.black38),
+            ),
+            Row(
+              children: [
+                if (widget.selected)
+                  GestureDetector(
+                    onPanUpdate: (d) => _dragLeft(d.delta.dx),
+                    child: Container(
+                      width: 14,
+                      decoration: const BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.horizontal(left: Radius.circular(AppRadius.chip)),
+                      ),
+                      child: const Icon(Icons.chevron_left, size: 14, color: Colors.white),
+                    ),
                   ),
-                  child: const Icon(Icons.chevron_right, size: 14, color: Colors.white),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      '${(widget.clip.effectiveDurationMs / 1000).toStringAsFixed(1)}s',
+                      style: const TextStyle(
+                          color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  ),
                 ),
-              ),
+                if (widget.selected)
+                  GestureDetector(
+                    onPanUpdate: (d) => _dragRight(d.delta.dx),
+                    child: Container(
+                      width: 14,
+                      decoration: const BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.horizontal(right: Radius.circular(AppRadius.chip)),
+                      ),
+                      child: const Icon(Icons.chevron_right, size: 14, color: Colors.white),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
       ),

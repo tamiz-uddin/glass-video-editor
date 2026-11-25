@@ -17,6 +17,9 @@ class EditorState {
     this.exportWidth = 1080,
     this.exportHeight = 1920,
     this.exportFps = 30,
+    this.musicPath,
+    this.musicVolume = 1.0,
+    this.musicStartMs = 0,
   });
 
   final List<Clip> clips;
@@ -27,6 +30,9 @@ class EditorState {
   final int exportWidth;
   final int exportHeight;
   final int exportFps;
+  final String? musicPath;
+  final double musicVolume;
+  final int musicStartMs;
 
   int get totalDurationMs => totalDurationMsOf(clips);
 
@@ -40,6 +46,8 @@ class EditorState {
 
   int get currentClipIndex => clipIndexAt(clips, playheadMs);
 
+  bool get needsFfmpeg => clips.any((c) => c.hasAdvancedOps);
+
   EditorState copyWith({
     List<Clip>? clips,
     List<TextOverlay>? overlays,
@@ -49,6 +57,9 @@ class EditorState {
     int? exportWidth,
     int? exportHeight,
     int? exportFps,
+    String? musicPath,
+    double? musicVolume,
+    int? musicStartMs,
   }) => EditorState(
         clips: clips ?? this.clips,
         overlays: overlays ?? this.overlays,
@@ -58,6 +69,9 @@ class EditorState {
         exportWidth: exportWidth ?? this.exportWidth,
         exportHeight: exportHeight ?? this.exportHeight,
         exportFps: exportFps ?? this.exportFps,
+        musicPath: musicPath ?? this.musicPath,
+        musicVolume: musicVolume ?? this.musicVolume,
+        musicStartMs: musicStartMs ?? this.musicStartMs,
       );
 }
 
@@ -80,6 +94,9 @@ class EditorController extends StateNotifier<EditorState> {
           exportWidth: project?.exportWidth ?? 1080,
           exportHeight: project?.exportHeight ?? 1920,
           exportFps: project?.exportFps ?? 30,
+          musicPath: project?.musicPath,
+          musicVolume: project?.musicVolume ?? 1.0,
+          musicStartMs: project?.musicStartMs ?? 0,
         ));
 
   final String projectId;
@@ -97,6 +114,9 @@ class EditorController extends StateNotifier<EditorState> {
         exportWidth: state.exportWidth,
         exportHeight: state.exportHeight,
         exportFps: state.exportFps,
+        musicPath: state.musicPath,
+        musicVolume: state.musicVolume,
+        musicStartMs: state.musicStartMs,
       ),
     );
   }
@@ -131,7 +151,8 @@ class EditorController extends StateNotifier<EditorState> {
   void splitSelectedAt(int timelineMs) {
     final id = state.selectedId;
     if (id == null) return;
-    state = state.copyWith(clips: splitClipInList(state.clips, id, timelineMs - timelineStartOf(state.clips, id)));
+    final offset = timelineMs - timelineStartOf(state.clips, id);
+    state = state.copyWith(clips: splitClipInList(state.clips, id, offset));
     _persist();
   }
 
@@ -158,6 +179,33 @@ class EditorController extends StateNotifier<EditorState> {
   void setVolume(String clipId, double volume) {
     state = state.copyWith(
       clips: state.clips.map((c) => c.id == clipId ? setVolume(c, volume) : c).toList(),
+    );
+    _persist();
+  }
+
+  void setTransition(String clipId, String transition) {
+    state = state.copyWith(
+      clips: state.clips
+          .map((c) => c.id == clipId ? c.copyWith(transition: transition) : c)
+          .toList(),
+    );
+    _persist();
+  }
+
+  void setFilter(String clipId, String filter) {
+    state = state.copyWith(
+      clips: state.clips
+          .map((c) => c.id == clipId ? c.copyWith(filter: filter) : c)
+          .toList(),
+    );
+    _persist();
+  }
+
+  void setMusic({String? path, double? volume, int? startMs}) {
+    state = state.copyWith(
+      musicPath: path,
+      musicVolume: volume,
+      musicStartMs: startMs,
     );
     _persist();
   }
@@ -200,6 +248,9 @@ class EditorController extends StateNotifier<EditorState> {
         exportWidth: state.exportWidth,
         exportHeight: state.exportHeight,
         exportFps: state.exportFps,
+        musicPath: state.musicPath,
+        musicVolume: state.musicVolume,
+        musicStartMs: state.musicStartMs,
       );
 
   String newOverlayId() => const Uuid().v4();

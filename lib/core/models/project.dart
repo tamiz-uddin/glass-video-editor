@@ -12,6 +12,9 @@ class Project extends HiveObject {
     this.exportWidth = 1080,
     this.exportHeight = 1920,
     this.exportFps = 30,
+    this.musicPath,
+    this.musicVolume = 1.0,
+    this.musicStartMs = 0,
   });
 
   final String id;
@@ -22,6 +25,9 @@ class Project extends HiveObject {
   final int exportWidth;
   final int exportHeight;
   final int exportFps;
+  final String? musicPath;
+  final double musicVolume;
+  final int musicStartMs;
 
   int get totalDurationMs => clips.fold(0, (sum, c) => sum + c.effectiveDurationMs);
 
@@ -32,6 +38,9 @@ class Project extends HiveObject {
     int? exportWidth,
     int? exportHeight,
     int? exportFps,
+    String? musicPath,
+    double? musicVolume,
+    int? musicStartMs,
   }) => Project(
         id: id,
         name: name ?? this.name,
@@ -41,6 +50,9 @@ class Project extends HiveObject {
         exportWidth: exportWidth ?? this.exportWidth,
         exportHeight: exportHeight ?? this.exportHeight,
         exportFps: exportFps ?? this.exportFps,
+        musicPath: musicPath ?? this.musicPath,
+        musicVolume: musicVolume ?? this.musicVolume,
+        musicStartMs: musicStartMs ?? this.musicStartMs,
       );
 
   Map<String, dynamic> toJson() => {
@@ -52,6 +64,9 @@ class Project extends HiveObject {
         'exportWidth': exportWidth,
         'exportHeight': exportHeight,
         'exportFps': exportFps,
+        'musicPath': musicPath,
+        'musicVolume': musicVolume,
+        'musicStartMs': musicStartMs,
       };
 
   factory Project.fromJson(Map<String, dynamic> json) => Project(
@@ -67,6 +82,9 @@ class Project extends HiveObject {
         exportWidth: (json['exportWidth'] as num?)?.toInt() ?? 1080,
         exportHeight: (json['exportHeight'] as num?)?.toInt() ?? 1920,
         exportFps: (json['exportFps'] as num?)?.toInt() ?? 30,
+        musicPath: json['musicPath'] as String?,
+        musicVolume: (json['musicVolume'] as num?)?.toDouble() ?? 1.0,
+        musicStartMs: (json['musicStartMs'] as num?)?.toInt() ?? 0,
       );
 }
 

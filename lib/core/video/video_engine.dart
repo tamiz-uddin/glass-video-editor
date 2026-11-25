@@ -20,6 +20,10 @@ class VideoEngine {
     return _channel.invokeMethod<int>('probeDuration', {'path': path});
   }
 
+  Future<void> setFfmpegPath(String path) async {
+    await _channel.invokeMethod('setFfmpegPath', {'path': path});
+  }
+
   Stream<double> exportProgress(String jobId) {
     return _progressChannel
         .receiveBroadcastStream({'jobId': jobId})

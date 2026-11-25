@@ -9,6 +9,8 @@ class Clip extends HiveObject {
     this.trimEndMs = 0,
     this.speed = 1.0,
     this.volume = 1.0,
+    this.transition = 'none',
+    this.filter = 'none',
   });
 
   final String id;
@@ -18,10 +20,14 @@ class Clip extends HiveObject {
   final int trimEndMs;
   final double speed;
   final double volume;
+  final String transition;
+  final String filter;
 
   int get sourceEndMs => trimEndMs == 0 ? durationMs : trimEndMs;
 
   int get effectiveDurationMs => ((sourceEndMs - trimStartMs) / speed).round();
+
+  bool get hasAdvancedOps => speed != 1.0 || filter != 'none' || transition != 'none';
 
   Clip copyWith({
     String? id,
@@ -31,6 +37,8 @@ class Clip extends HiveObject {
     int? trimEndMs,
     double? speed,
     double? volume,
+    String? transition,
+    String? filter,
   }) {
     return Clip(
       id: id ?? this.id,
@@ -40,6 +48,8 @@ class Clip extends HiveObject {
       trimEndMs: trimEndMs ?? this.trimEndMs,
       speed: speed ?? this.speed,
       volume: volume ?? this.volume,
+      transition: transition ?? this.transition,
+      filter: filter ?? this.filter,
     );
   }
 
@@ -51,6 +61,8 @@ class Clip extends HiveObject {
         'trimEndMs': trimEndMs,
         'speed': speed,
         'volume': volume,
+        'transition': transition,
+        'filter': filter,
       };
 
   factory Clip.fromJson(Map<String, dynamic> json) => Clip(
@@ -61,6 +73,8 @@ class Clip extends HiveObject {
         trimEndMs: (json['trimEndMs'] as num?)?.toInt() ?? 0,
         speed: (json['speed'] as num?)?.toDouble() ?? 1.0,
         volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
+        transition: json['transition'] as String? ?? 'none',
+        filter: json['filter'] as String? ?? 'none',
       );
 }
 

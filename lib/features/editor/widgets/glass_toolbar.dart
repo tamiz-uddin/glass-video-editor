@@ -22,13 +22,11 @@ class GlassToolbar extends StatelessWidget {
       opacity: 0.10,
       radius: AppRadius.panel,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: tools
-            .map(
-              (tool) => _ToolButton(tool: tool),
-            )
-            .toList(),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: tools.map((tool) => _ToolButton(tool: tool)).toList(),
+        ),
       ),
     );
   }

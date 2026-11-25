@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
@@ -188,6 +189,37 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             onChanged: (v) => _editor.setSpeed(clip.id, v),
           ),
         );
+      }),
+      EditorTool(Icons.switch_right, 'Transition', () {
+        final clip = state.selectedClip;
+        if (clip == null) return;
+        showToolSheet(
+          context: context,
+          title: 'Transition (to next clip)',
+          child: OptionSheet(
+            options: transitionOptions,
+            current: clip.transition,
+            onSelected: (t) => _editor.setTransition(clip.id, t),
+          ),
+        );
+      }),
+      EditorTool(Icons.filter_vintage, 'Filter', () {
+        final clip = state.selectedClip;
+        if (clip == null) return;
+        showToolSheet(
+          context: context,
+          title: 'Filter',
+          child: OptionSheet(
+            options: filterOptions,
+            current: clip.filter,
+            onSelected: (f) => _editor.setFilter(clip.id, f),
+          ),
+        );
+      }),
+      EditorTool(Icons.music_note, 'Music', () async {
+        final result = await FilePicker.platform.pickFiles(type: FileType.audio);
+        final path = result?.files.single.path;
+        if (path != null) _editor.setMusic(path: path);
       }),
       EditorTool(Icons.volume_up_outlined, 'Volume', () {
         final clip = state.selectedClip;

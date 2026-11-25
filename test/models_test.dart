@@ -26,6 +26,22 @@ void main() {
       expect(restored.effectiveDurationMs, 2000);
     });
 
+    test('transition and filter roundtrip + hasAdvancedOps', () {
+      final clip = Clip(
+        id: 'c2',
+        path: '/tmp/b.mp4',
+        durationMs: 2000,
+        speed: 2.0,
+        transition: 'fade',
+        filter: 'warm',
+      );
+      final restored = Clip.fromJson(clip.toJson());
+      expect(restored.transition, 'fade');
+      expect(restored.filter, 'warm');
+      expect(restored.hasAdvancedOps, isTrue);
+      expect(Clip(id: 'c3', path: '/x', durationMs: 1).hasAdvancedOps, isFalse);
+    });
+
     test('defaults for missing fields', () {
       final clip = Clip.fromJson({'id': 'x', 'path': '/p', 'durationMs': 1000});
       expect(clip.trimStartMs, 0);
